@@ -3,7 +3,6 @@ package yuan.thymeleaf.demo.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.thymeleaf.util.DateUtils;
 import yuan.thymeleaf.demo.entity.User;
 
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class UserController {
 
         // list中存放 用户
         List<User> userList = new ArrayList<>();
-        for (long i=0; i<5; i++){
+        for (long i = 0; i < 5; i++){
             User user = new User();
             user.setId(i);
             user.setAge(18);
@@ -32,7 +31,7 @@ public class UserController {
             userList.add(user);
         }
         // 为视图添加用户
-        model.addAttribute("users",userList);
+        model.addAttribute("users", userList);
         // 逻辑视图为 user 即在 templates 下的 user.html
         return "user";
     }

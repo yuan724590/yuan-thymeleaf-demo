@@ -1,27 +1,15 @@
 <!DOCTYPE html>
-<!--将默认的头 <html lang="en"> 引入thymeleaf-->
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <title>用户页面</title>
+    <title>Tools</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 </head>
 <body>
 <table border="1px">
-    <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>age</th>
-    </tr>
-    <!--通过 th:each 语法迭代user集合-->
-    <tr th:each="user: ${users}">
-        <td th:text="${user.id}"></td>
-        <td th:text="${user.name}"></td>
-        <td th:text="${user.age}"></td>
-        <!-- 注意 这里是Date的对象 -->
-        <td th:text="${#dates.format(user.birthday, 'yyyy-MM-dd hh:mm:ss')}"></td>
-    </tr>
+    <form action="#" th:action="@{/trim}" th:object="${trim}" method="post">
+        <p>content: <input type="text" th:field="*{content}"  style="height: 200px;"/></p>
+        <p><input type="submit" value="Submit"/></p>
+    </form>
 </table>
-[[${#dates.format(new java.util.Date().getTime(), 'yyyy-MM-dd hh:mm:ss')}]]
-<p th:text="${new java.util.Date().getTime()}"></p>
 </body>
 </html>
