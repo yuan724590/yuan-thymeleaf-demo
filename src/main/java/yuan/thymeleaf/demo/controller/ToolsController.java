@@ -3,12 +3,11 @@ package yuan.thymeleaf.demo.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import yuan.thymeleaf.demo.entity.CompareJson;
 import yuan.thymeleaf.demo.entity.Trim;
-import yuan.thymeleaf.demo.entity.User;
+import yuan.thymeleaf.demo.service.ToolsService;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import javax.annotation.Resource;
 
 
 /**
@@ -17,6 +16,9 @@ import java.util.List;
  */
 @Controller
 public class ToolsController {
+
+    @Resource
+    private ToolsService toolsService;
 
     @GetMapping("/trim")
     public String trim(Model model){
@@ -31,5 +33,15 @@ public class ToolsController {
         return "trim";
     }
 
+    @GetMapping("/compare")
+    public String comp(Model model){
+        model.addAttribute("compare", new CompareJson());
+        return "compare";
+    }
 
+    @PostMapping("/compare")
+    public String comp(Model model, @ModelAttribute("compare") CompareJson compare){
+        toolsService.compare(model, compare);
+        return "compare";
+    }
 }

@@ -1,5 +1,5 @@
 server:
-  port: 40005
+  port: 40006
 spring:
   # 引擎模板配置
   thymeleaf:
