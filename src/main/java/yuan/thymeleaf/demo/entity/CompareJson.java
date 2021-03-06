@@ -11,6 +11,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class CompareJson {
 
     /**
+     * 忽略值类型
+     */
+    private Byte isIgnoreValueType;
+
+    /**
      * 原始内容
      */
     private String content1;

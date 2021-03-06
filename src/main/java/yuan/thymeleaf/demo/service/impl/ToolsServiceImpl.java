@@ -5,14 +5,19 @@ import com.alibaba.fastjson.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
+import yuan.thymeleaf.demo.common.Constants;
 import yuan.thymeleaf.demo.entity.CompareJson;
+import yuan.thymeleaf.demo.entity.Judgment;
 import yuan.thymeleaf.demo.service.ToolsService;
 
 @Service
 public class ToolsServiceImpl implements ToolsService {
 
+    private static Byte isIgnoreValueType;
+
     @Override
     public void compare(Model model, CompareJson compare) {
+        isIgnoreValueType = compare.getIsIgnoreValueType();
         JSONObject json1 = parseJson(compare.getContent1());
         JSONObject json2 = parseJson(compare.getContent2());
         if(json1.isEmpty() || json2.isEmpty()){
@@ -50,16 +55,42 @@ public class ToolsServiceImpl implements ToolsService {
         }else if(obj1 instanceof JSONArray && obj2 instanceof JSONArray){
             processJsonArray(stringBuilder1, (JSONArray)obj1, stringBuilder2, (JSONArray)obj2, key);
         }else{
+            //判断值是否相同
+            Judgment judgment = judgmentValue(obj1, obj2);
             if(!"".equals(key)){
-                String content = key + ":" + String.valueOf(obj1);
-                addClassLabel(stringBuilder1, content, String.valueOf(obj1).equals(String.valueOf(obj2)));
-                content = key + ":" + String.valueOf(obj2);
-                addClassLabel(stringBuilder2, content, String.valueOf(obj1).equals(String.valueOf(obj2)));
+                String content = key + ":" + String.valueOf(obj1) + judgment.getClassName1();
+                addClassLabel(stringBuilder1, content, judgment.getFlag());
+                content = key + ":" + String.valueOf(obj2) + judgment.getClassName2();
+                addClassLabel(stringBuilder2, content, judgment.getFlag());
             }else{
-                addClassLabel(stringBuilder1, String.valueOf(obj1), String.valueOf(obj1).equals(String.valueOf(obj2)));
-                addClassLabel(stringBuilder2, String.valueOf(obj2), String.valueOf(obj1).equals(String.valueOf(obj2)));
+                addClassLabel(stringBuilder1, String.valueOf(obj1) + judgment.getClassName1(), judgment.getFlag());
+                addClassLabel(stringBuilder2, String.valueOf(obj2) + judgment.getClassName2(), judgment.getFlag());
             }
         }
+    }
+
+    /**
+     * 判断值是否相同
+     */
+    private Judgment judgmentValue(Object obj1, Object obj2){
+        Judgment judgment = new Judgment();
+        if(Constants.IS_IGNORE_VALUE_TYPE.equals(isIgnoreValueType)){
+            //忽略大小写
+            judgment.setFlag(String.valueOf(obj1).equals(String.valueOf(obj2)));
+            judgment.setClassName1("");
+            judgment.setClassName2("");
+        }else{
+            boolean flag = obj1.getClass().getName().equals(obj2.getClass().getName());
+            judgment.setFlag(flag);
+            if(!flag){
+                String[] str1 = obj1.getClass().getName().split("\\.");
+                judgment.setClassName1("(" + str1[str1.length - 1] + ")");
+
+                String[] str2 = obj2.getClass().getName().split("\\.");
+                judgment.setClassName2("(" + str2[str2.length - 1] + ")");
+            }
+        }
+        return judgment;
     }
 
     /**
