@@ -6,20 +6,25 @@
 </head>
 <body>
     <table border="1px">
-        <form action="#" th:action="@{/compare}" th:object="${compare}" method="post">
-            <p><input type="submit" value="进行比对"/></p>
-            <p>
-                <input type="text" th:field="*{format1}" style="width: 600px;" placeholder="请输入原始内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
-                <input type="text" th:field="*{format2}" style="width: 600px;" placeholder="请输入对比内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
-            </p>
-            <p>
-                对比结果:
-                <textarea th:field="*{content1}" style="width: 600px;height: 400px;" placeholder="请输入原始内容"/>
-                <textarea th:field="*{content2}" style="width: 600px;height: 400px;" placeholder="请输入对比内容"/>
-            </p>
-            <div th:utext="${result1}"></div>
-            <div th:utext="${result2}"></div>
-        </form>
+
+            <form action="#" th:action="@{/compare}" th:object="${compare}" method="post">
+                <p><input type="submit" value="进行比对"/></p>
+                <p>
+                    <input type="text" th:field="*{format1}" style="width: 200px;"
+                           placeholder="请输入原始内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
+                    <input type="text" th:field="*{format2}" style="position: absolute;left: 625px;width: 200px;margin-left: 19px"
+                           placeholder="请输入对比内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
+                </p>
+                <p>
+                    <textarea th:field="*{content1}" style="width: 600px;height: 400px;" placeholder="请输入原始内容"/>
+                    <textarea th:field="*{content2}" style="width: 600px;height: 400px;margin-left: 25px" placeholder="请输入对比内容"/>
+                </p>
+                <p>对比内容:</p>
+                <p>
+                    <span th:utext="${result1}"/>
+                    <span th:utext="${result2}" style="position: absolute;top: 538px;left: 642px;"/>
+                </p>
+            </form>
     </table>
     <style>
         .red {

@@ -21,6 +21,11 @@ public class CompareJson {
     private String format1;
 
     /**
+     * 对比内容结果
+     */
+    private String result1;
+
+    /**
      * 对比内容
      */
     private String content2;
@@ -29,4 +34,9 @@ public class CompareJson {
      * 对比内容格式
      */
     private String format2;
+
+    /**
+     * 对比内容结果
+     */
+    private String result2;
 }

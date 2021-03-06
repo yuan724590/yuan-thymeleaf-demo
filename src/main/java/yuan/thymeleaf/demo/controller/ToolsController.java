@@ -35,7 +35,8 @@ public class ToolsController {
 
     @GetMapping("/compare")
     public String comp(Model model){
-        model.addAttribute("compare", new CompareJson());
+        CompareJson compareJson = new CompareJson();
+        model.addAttribute("compare", compareJson);
         return "compare";
     }
 
