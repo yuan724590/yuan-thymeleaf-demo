@@ -34,14 +34,14 @@ public class ToolsController {
     }
 
     @GetMapping("/compare")
-    public String comp(Model model){
+    public String compare(Model model){
         CompareJson compareJson = new CompareJson();
         model.addAttribute("compare", compareJson);
         return "compare";
     }
 
     @PostMapping("/compare")
-    public String comp(Model model, @ModelAttribute("compare") CompareJson compare){
+    public String compare(Model model, @ModelAttribute("compare") CompareJson compare){
         toolsService.compare(model, compare);
         return "compare";
     }
