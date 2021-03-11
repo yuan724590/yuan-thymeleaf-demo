@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Tools</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<table border="1px">
+    <form action="#" th:action="@{/entityToVo}" th:object="${entityToVo}" method="post">
+        <textarea id="content1" type="text" th:field="*{content}"
+                  style="height: 600px; width: 40%; border: 1px solid  #000; overflow-y: auto;"/>
+        <div th:utext="${voContent}" contenteditable="true"
+             style="position: absolute; top: 1% ;left: 45%; height: 600px; width: 40%; border: 1px solid  #000; overflow-y: auto;"></div>
+        <p><input type="submit" value="点击将Entity转为VO"/></p>
+    </form>
+</table>
+</body>
+</html>

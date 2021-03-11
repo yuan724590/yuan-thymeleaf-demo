@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import yuan.thymeleaf.demo.common.Constants;
 import yuan.thymeleaf.demo.entity.CompareJson;
+import yuan.thymeleaf.demo.entity.EntityToVo;
 import yuan.thymeleaf.demo.service.ToolsService;
 
 import java.util.ArrayList;
@@ -63,7 +64,7 @@ public class ToolsServiceImpl implements ToolsService {
      * 组装标签样式
      */
     private String labelStyle(String content, String format){
-        String[] content1Arr = content.split("\r\n");
+        String[] content1Arr = content.split(Constants.LINE_FEED);
         Map<Integer, Boolean> map = new HashMap<>();
         for(Integer index : getIndexList(content, format)){
             map.put(index, true);
@@ -84,7 +85,7 @@ public class ToolsServiceImpl implements ToolsService {
      * 获取所有需要标红的索引
      */
     private List<Integer> getIndexList(String content, String format){
-        String[] content1Arr = content.split("\r\n");
+        String[] content1Arr = content.split(Constants.LINE_FEED);
         List<Integer> indexList = new ArrayList<>();
         boolean flag = true;
         for(String keys : keyList) {
@@ -183,16 +184,23 @@ public class ToolsServiceImpl implements ToolsService {
         for (int j = i; j < contentArr.length; j++) {
             content = contentArr[j].toCharArray();
             for(int l = 0; l < content.length; l++){
-                if("[".equals(String.valueOf(content[l]))){
-                    leftCounts++;
-                }else if("]".equals(String.valueOf(content[l]))){
-                    rightCounts++;
-                    exitFlag = true;
-                }else if("{".equals(String.valueOf(content[l]))){
-                    leftCount++;
-                    flag = true;
-                }else if("}".equals(String.valueOf(content[l]))){
-                    rightCount++;
+                switch (String.valueOf(content[l])){
+                    case "[":
+                        leftCounts++;
+                        break;
+                    case "]":
+                        rightCounts++;
+                        exitFlag = true;
+                        break;
+                    case "{":
+                        leftCount++;
+                        flag = true;
+                        break;
+                    case "}":
+                        rightCount++;
+                        break;
+                    default:
+                        break;
                 }
                 if(exitFlag && leftCounts == rightCounts){
                     //中括号数量相同, 说明数组结束
@@ -341,9 +349,9 @@ public class ToolsServiceImpl implements ToolsService {
      */
     private void addClassLabel(StringBuilder stringBuilder, String row, boolean flag){
         if(flag){
-            stringBuilder.append("<span>").append(row).append("</span><br/>");
+            stringBuilder.append(Constants.SPAN_LABEL).append(row).append(Constants.JSON_LABEL_SUFFIX);
         }else{
-            stringBuilder.append("<span class=red>").append(row).append("</span><br/>");
+            stringBuilder.append(Constants.SPAN_LABEL_CLASS_RED).append(row).append(Constants.JSON_LABEL_SUFFIX);
         }
     }
 
@@ -351,6 +359,51 @@ public class ToolsServiceImpl implements ToolsService {
      * 将文本按照回车切割为string数组
      */
     private String[] getRows(String content){
-        return content.split("\r\n");
+        return content.split(Constants.LINE_FEED);
+    }
+
+    @Override
+    public void entityToVo(Model model, EntityToVo entityToVo){
+        if(StringUtils.isEmpty(entityToVo.getContent())){
+            return;
+        }
+        String[] entityArray = entityToVo.getContent().split(Constants.LINE_FEED);
+        String line;
+        String[] strArray;
+        StringBuilder stringBuilder = new StringBuilder();
+        for(String entity : entityArray){
+            line = entity.replaceAll("\\s", "");
+            if(StringUtils.isEmpty(line) || line.startsWith(Constants.PRIVATE)){
+                //如果是空行 或者 是属性, 则跳过
+            }else if(line.startsWith(Constants.COLUMN_VALUE_ANNOTATION) || line.startsWith(Constants.SLASH_STAR_STAR)
+                    || line.startsWith(Constants.STAR_SLASH) || line.startsWith(Constants.DATA_ANNOTATION)
+                    || line.startsWith(Constants.TABLE_ANNOTATION) || line.startsWith(Constants.GENERATED_VALUE_ANNOTATION)){
+                //如果是 @Column || /** || */ || @Data || @Table || @GeneratedValue 就跳过
+                continue;
+            }else if(line.startsWith(Constants.STAR)){
+                //如果是注释行, 则将内容提取出来
+                strArray = entity.split(Constants.STAR_REGEX);
+                entity = strArray[0] + Constants.API_MODEL_PROPERTY_ANNOTATION + strArray[1].trim() + Constants.ANNOTATION_SUFFIX;
+            }else if(line.startsWith(Constants.IMPORT)){
+                if(line.contains(Constants.JAVAX_PERSISTENCE) || line.contains(Constants.LOMBOK_DATA)){
+                    //去掉@Data和@Table所import的包名
+                    continue;
+                }
+            }else if(entity.startsWith(Constants.PUBLIC_CLASS)){
+                //将文件名增加vo后缀
+                entity = entity.replace(Constants.SPACE_BRACKET, Constants.VO_SPACE_BRACKET);
+            }else if(line.startsWith(Constants.PACKAGE)){
+                if(entity.contains(Constants.ENTITY)){
+                    //将包地址移动至vo下
+                    strArray = entity.split(Constants.ENTITY);
+                    entity = strArray[0] + Constants.VO + strArray[1];
+                }
+            }else if(line.startsWith(Constants.ID_ANNOTATION)){
+                //如果是@Id 则换成空行
+                entity = "";
+            }
+            addClassLabel(stringBuilder, entity, false);
+            model.addAttribute("voContent", stringBuilder.toString());
+        }
     }
 }
