@@ -86,22 +86,25 @@ public class ToolsServiceImpl implements ToolsService {
     private List<Integer> getIndexList(String content, String format){
         String[] content1Arr = content.split("\r\n");
         List<Integer> indexList = new ArrayList<>();
+        boolean flag = true;
         for(String keys : keyList) {
             //获取key数组
             String[] keyArr = getKeyArray(keys, format);
             int index = 0;
             List<Integer> list;
             for(int i = 0; i < keyArr.length; i++){
-                list = calcStylePosition(content1Arr, keyArr[i], i == 0 ? "" : keyArr[i - 1], index);
+                list = calcStylePosition(content1Arr, keyArr[i], i + 1 < keyArr.length ? keyArr[i + 1] : keyArr[i], index);
                 if(list.size() > 1){
                     indexList.addAll(list);
+                    flag = false;
                 }else if(list.size() > 0){
                     index = list.get(0);
                 }else{
-                    index = -1;
+                    index = 0;
+                    break;
                 }
             }
-            if(index > 0){
+            if(flag && index > 0){
                 //该key在json中的行数
                 indexList.add(index);
             }
@@ -128,7 +131,7 @@ public class ToolsServiceImpl implements ToolsService {
     /**
      * 计算key出现的位置
      */
-    private List<Integer> calcStylePosition(String[] contentArr, String key, String lastKey, int index){
+    private List<Integer> calcStylePosition(String[] contentArr, String key, String nextKey, int index){
         List<Integer> indexList = new ArrayList<>();
         for (int i = index; i < contentArr.length; i++) {
             if(StringUtils.isNotEmpty(key) && contentArr[i].trim().contains("\"" + key + "\":")){
@@ -140,9 +143,21 @@ public class ToolsServiceImpl implements ToolsService {
                 //数量
                 List<Integer> list = getIndexRange(arrayIndex, i, contentArr);
                 if(list.size() > 1){
-                    for(int j = list.get(0); j <= list.get(1); j++){
-                        indexList.add(j);
+                    if(nextKey.equals(key)){
+                        //如果下标为最后一个, 则把整个对象都标识出来
+                        for(int j = list.get(0); j <= list.get(1); j++){
+                            indexList.add(j);
+                        }
+                    }else{
+                        for (int l = list.get(0); l <= list.get(1); l++) {
+                            if(contentArr[l].trim().contains("\"" + nextKey + "\":")){
+                                indexList.add(l);
+                                break;
+                            }
+                        }
                     }
+                }else{
+                    indexList = new ArrayList<>();
                 }
                 return indexList;
             }
@@ -154,8 +169,6 @@ public class ToolsServiceImpl implements ToolsService {
      * 获取行数范围
      */
     private List<Integer> getIndexRange(int arrayIndex, int i, String[] contentArr){
-        int startIndex = 0;
-        int endIndex = 0;
         int count = 0;
         //大括号数量
         int leftCount = 0;
@@ -188,6 +201,7 @@ public class ToolsServiceImpl implements ToolsService {
                 if(flag && leftCount > 0 && leftCount == rightCount){
                     count++;
                     flag = false;
+                    //这里直接操作数字的原因是偷懒了, 实际上没必要写的那么通用
                     if(arrayIndex == 0){
                         list.add(i + 1);
                         list.add(j - 1);
@@ -202,13 +216,6 @@ public class ToolsServiceImpl implements ToolsService {
             }
         }
         return list;
-    }
-
-    /**
-     * 计算某字符数量
-     */
-    private Integer charCount(String content, String regex){
-        return content.length() - content.replaceAll(regex, "").length();
     }
 
     /**
