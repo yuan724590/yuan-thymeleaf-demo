@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import yuan.thymeleaf.demo.entity.CompareJson;
 import yuan.thymeleaf.demo.entity.EntityToVo;
 import yuan.thymeleaf.demo.entity.Trim;
+import yuan.thymeleaf.demo.entity.WordToConstant;
 import yuan.thymeleaf.demo.service.ToolsService;
 
 import javax.annotation.Resource;
@@ -20,6 +21,11 @@ public class ToolsController {
 
     @Resource
     private ToolsService toolsService;
+
+    @GetMapping("/index")
+    public String index(Model model){
+        return "index";
+    }
 
     @GetMapping("/trim")
     public String trim(Model model){
@@ -51,6 +57,22 @@ public class ToolsController {
     }
 
     /**
+     * 比较内容-老版本
+     */
+    @GetMapping("/compareOld")
+    public String compareOld(Model model){
+        CompareJson compareJson = new CompareJson();
+        model.addAttribute("compare", compareJson);
+        return "compare";
+    }
+
+    @PostMapping("/compareOld")
+    public String compareOld(Model model, @ModelAttribute("compare") CompareJson compare){
+        toolsService.compareOld(model, compare);
+        return "compare";
+    }
+
+    /**
      * entity转vo
      */
     @GetMapping("/entityToVo")
@@ -64,5 +86,22 @@ public class ToolsController {
     public String entityToDto(Model model, @ModelAttribute("entityToVo") EntityToVo entityToVo){
         toolsService.entityToVo(model, entityToVo);
         return "entityToVo";
+    }
+
+    /**
+     * 单词转常量
+     */
+    @GetMapping("/wordToConstant")
+    public String wordToConstant(Model model){
+        WordToConstant wordToConstant = new WordToConstant();
+        model.addAttribute("wordToConstant", wordToConstant);
+        return "wordToConstant";
+    }
+
+    @PostMapping("/wordToConstant")
+    public String wordToConstant(Model model, @ModelAttribute("wordToConstant") WordToConstant wordToConstant){
+        String constantContent = toolsService.wordToConstant(wordToConstant);
+        model.addAttribute("constantContent", constantContent);
+        return "wordToConstant";
     }
 }

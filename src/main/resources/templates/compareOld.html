@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Tools</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<table border="1px">
+
+    <form action="#" th:action="@{/compare}" th:object="${compareJson}" method="post">
+        <p>
+            <select name="group" class="form-control" th:field="*{isIgnoreValueType}" style="margin-left: 50px;height: 23px">
+                <option value="0">区分值类型</option>
+                <option value="1">忽略值类型</option>
+            </select>
+            <input type="submit" value="进行比对" style="margin-left: 50px"/>
+        </p>
+        <p>
+            <input type="text" th:field="*{format1}" style="width: 200px;"
+                   placeholder="请输入原始内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
+            <input type="text" th:field="*{format2}" style="position: absolute;left: 625px;width: 200px;margin-left: 19px"
+                   placeholder="请输入对比内容格式,如result.data,则只解析result层级下data的内容, 需保证层级为JSONObject格式"/>
+        </p>
+        <p>
+            <textarea th:field="*{content1}" style="width: 600px;height: 400px;" placeholder="请输入原始内容"/>
+            <textarea th:field="*{content2}" style="width: 600px;height: 400px;margin-left: 25px" placeholder="请输入对比内容"/>
+        </p>
+        <p>对比内容:</p>
+        <p>
+            <span th:utext="${result1}"/>
+            <span th:utext="${result2}" style="position: absolute;top: 538px;left: 642px;"/>
+        </p>
+    </form>
+</table>
+<p><a href="http://127.0.0.1:40006/index">返回主页面</a></p>
+<style>
+    .red {
+        color:red;
+    }
+</style>
+<script>
+</script>
+</body>
+</html>
