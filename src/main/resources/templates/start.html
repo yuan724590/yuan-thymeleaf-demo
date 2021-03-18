@@ -13,9 +13,8 @@
         <p style="margin-left: 20%;">抢购时间: <input type="text" th:field="*{startTime}"  style="margin-left: 6px; width: 500px" placeholder="请输入时间戳"/></p>
         <p style="margin-left: 20%;"><input type="submit" value="点击开始快乐"/></p>
         <br/>
-        <div style="margin-left: 20%;">订单号:
-            <div th:utext="${orderId}" contenteditable="true" style="position: absolute;top: 230px; left: 375px;width: 505px; border: 1px solid  #000;"></div>
-        </div>
+        <div style="margin-left: 20%;">订单号:</div>
+        <div th:utext="${orderId}" contenteditable="true" style="position: absolute;top: 230px; margin-left: 20%;width: 505px; border: 1px solid  #000;"></div>
         <span style="margin-left: 20%;color: red;">如果抢到商品,则会在此展示订单号,未抢到则不展示</span>
     </form>
 </table>

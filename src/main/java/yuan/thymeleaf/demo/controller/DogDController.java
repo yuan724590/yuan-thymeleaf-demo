@@ -8,7 +8,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.thymeleaf.util.DateUtils;
 import yuan.thymeleaf.demo.entity.Start;
 import yuan.thymeleaf.demo.utils.HttpUtils;
 
@@ -33,20 +32,21 @@ public class DogDController {
 
     @PostMapping("/start")
     public String start(Model model, @ModelAttribute("compare") Start start){
+        String result1 = "";
+        String result2 = "";
+        String result3 = "";
         try {
             long nowTime = System.currentTimeMillis();
             long startTime = (long)start.getStartTime() * 1000;
             if(startTime >= nowTime){
-                while (true) {
+                //准备抢跑
+                while (true){
                     nowTime = System.currentTimeMillis();
-                    long diff = Math.abs(startTime - nowTime);
-                    if(diff < 3000){
-                        checkAll(start.getCookie());
-                        getOrderInfo(start.getCookie());
-                    }
                     if(startTime <= nowTime){
-                        String result = submitOrder(start.getCookie(), start.getEid(), start.getFp());
-                        JSONObject jsonObject = JSONObject.parseObject(result);
+                        result1 = checkAll(start.getCookie());
+                        result2 = getOrderInfo(start.getCookie());
+                        result3 = submitOrder(start.getCookie(), start.getEid(), start.getFp());
+                        JSONObject jsonObject = JSONObject.parseObject(result3);
                         model.addAttribute("orderId", jsonObject.getString("orderId"));
                         break;
                     }
@@ -55,6 +55,9 @@ public class DogDController {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        log.info("result1结果是:{}", result1);
+        log.info("result2结果是:{}", result2);
+        log.info("result3结果是:{}", result3);
         model.addAttribute("start", start);
         return "start";
     }
@@ -79,11 +82,11 @@ public class DogDController {
             e.printStackTrace();
         }
         t1 = System.currentTimeMillis() - t1;
-        log.info("请求submitOrder,耗时:{}, 结果为:{}", t1, result);
+        log.info("请求submitOrder,耗时:{}", t1);
         return result;
     }
 
-    private void getOrderInfo(String cookie){
+    private String getOrderInfo(String cookie){
         long t1 = System.currentTimeMillis();
         String result = "";
         try {
@@ -101,18 +104,30 @@ public class DogDController {
             e.printStackTrace();
         }
         t1 = System.currentTimeMillis() - t1;
-        log.info("请求getOrderInfo,耗时:{}, 结果为:{}", t1, result);
+        log.info("请求getOrderInfo,耗时:{}", t1);
+        return result;
     }
 
-    private void checkAll(String cookie){
+    private String checkAll(String cookie){
         long t1 = System.currentTimeMillis();
-        String checkAll = "http://api.m.jd.com/api?functionId=pcCart_jc_cartCheckAll&appid=JDC_mall_cart" +
-                "&loginType=3&body=%7B%22serInfo%22:%7B%22area%22:%2219_1607_3155_62120%22,%22user-key%22:%22ae3ec562-a1a4-4b11-8ae7-2501f2522618%22%7D%7D";
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("cookie", cookie);
-        headerMap.put("referer", "https://cart.jd.com/");
-        String result = HttpUtils.doGet(checkAll, headerMap);
+        int i = 0;
+        String result;
+        while(true){
+            i++;
+            String checkAll = "http://api.m.jd.com/api?functionId=pcCart_jc_cartCheckAll&appid=JDC_mall_cart" +
+                    "&loginType=3&body=%7B%22serInfo%22:%7B%22area%22:%2219_1607_3155_62120%22,%22user-key%22:%22ae3ec562-a1a4-4b11-8ae7-2501f2522618%22%7D%7D";
+            Map<String, String> headerMap = new HashMap<>();
+            headerMap.put("cookie", cookie);
+            headerMap.put("referer", "https://cart.jd.com/");
+            result = HttpUtils.doGet(checkAll, headerMap);
+            int num = JSONObject.parseObject(result).getJSONObject("resultData").getJSONObject("cartInfo").getIntValue("checkedWareNum");
+            if(num > 0){
+                break;
+            }
+        }
+
         t1 = System.currentTimeMillis() - t1;
-        log.info("请求checkAll,耗时:{}, 结果为:{}", t1, result);
+        log.info("请求checkAll,耗时:{}, num:{}", t1, i);
+        return result;
     }
 }
