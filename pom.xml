@@ -21,9 +21,17 @@
         <commons.lang3.version>3.12.0</commons.lang3.version>
         <httpclient.version>4.5.13</httpclient.version>
         <okhttp.version>3.11.0</okhttp.version>
+        <javax.mail.version>1.6.2</javax.mail.version>
     </properties>
     
     <dependencies>
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>javax.mail</artifactId>
+            <version>${javax.mail.version}</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
