@@ -320,6 +320,9 @@ public class DogDController {
             future = cachedThreadPool.submit(() -> {
                 //获取购物车列表
                 JSONObject jsonObject = getMallCartList(cookie);
+                if(jsonObject == null){
+                    return Collections.emptyMap();
+                }
                 //处理商品列表
                 List<Goods> goods = processGoods(jsonObject.getJSONArray("vendors"), jsonObject.getIntValue("time"));
                 return goods.stream().collect(Collectors.toMap(Goods::getId, a -> a));
@@ -386,7 +389,9 @@ public class DogDController {
                 JSONObject jsonObject = JSONObject.parseObject(result);
                 if(!jsonObject.isEmpty()){
                     JSONObject cartJson = jsonObject.getJSONObject("resultData").getJSONObject("cartInfo");
-                    cartJson.put("time", time);
+                    if(cartJson != null){
+                        cartJson.put("time", time);
+                    }
                     return cartJson;
                 }
             }catch (Exception e){
