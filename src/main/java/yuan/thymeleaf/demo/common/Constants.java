@@ -43,4 +43,5 @@ public class Constants {
     public static final String PUBLIC_CLASS = "public class";
     public static final String SPACE_BRACKET = " {";
     public static final String VO_SPACE_BRACKET = "VO {";
+    public static final String PIN_IS_NULL = "pin is null";
 }

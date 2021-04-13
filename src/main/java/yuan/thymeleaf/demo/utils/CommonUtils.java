@@ -60,7 +60,7 @@ public class CommonUtils {
             InternetAddress to = new InternetAddress("724590161@qq.com");
             message.setRecipient(RecipientType.TO, to);
             // 设置邮件标题
-            message.setSubject("狗东可能产生了个订单,抓紧时间看看");
+            message.setSubject(orderId + "狗东可能产生了个订单,抓紧时间看看");
             // 设置邮件的内容体
             message.setContent("orderId:" + orderId, "text/html;charset=UTF-8");
             // 最后当然就是发送邮件啦

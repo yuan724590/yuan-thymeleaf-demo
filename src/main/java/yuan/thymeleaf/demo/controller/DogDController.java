@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import yuan.thymeleaf.demo.common.Constants;
 import yuan.thymeleaf.demo.entity.Goods;
 import yuan.thymeleaf.demo.entity.Start;
 import yuan.thymeleaf.demo.utils.CommonUtils;
@@ -175,6 +176,10 @@ public class DogDController {
         JSONObject jsonObject;
         while(true){
             goodList = retryGoodList(start.getCookie());
+            if(goodList == null){
+                CommonUtils.sendMail("登录态异常， 请重新登录");
+                return "";
+            }
             map = goodList.stream().collect(Collectors.groupingBy(Goods::getYuyueTime));
             boolean isGetOrderInfo = false;
             while(true){
@@ -220,6 +225,59 @@ public class DogDController {
     }
 
     /**
+     * 开线程进行额外处理
+     */
+    private void syncExtraProcess(String cookie, Long id, Start start, String skuUuid){
+        try {
+            Future future = cachedThreadPool.submit(() -> {
+                //进行单选
+                return singleCheck(cookie, id, start, skuUuid);
+            });
+            future.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 开始处理茅台逻辑
+     */
+    private void bugMaoTai(String cookie){
+        while(true){
+            //获取预约开始时间
+            int countdown = getYuyueStartTime(cookie);
+            //等待预约开始
+            threadSleep(countdown + 5);
+        }
+    }
+
+    /**
+     * 获取预约结束时间
+     */
+    private int getYuyueStartTime(String cookie){
+        try {
+            OkHttpClient client = new OkHttpClient().newBuilder()
+                    .build();
+            Request request = new Request.Builder()
+                    .url("https://item-soa.jd.com/getWareBusiness?callback=jQuery8163912&skuId=100012043978" +
+                            "&cat=12259%2C12260%2C9435&area=19_1607_3155_62120&shopId=1000085463&venderId=1000085463" +
+                            "&paramJson=%7B%22platform2%22%3A%221%22%2C%22specialAttrStr%22%3A%22p0pp1pppppppppppppppppp%22%2C%22skuMarkStr%22%3A%2200%22%7D")
+                    .method("GET", null)
+                    .addHeader("cookie", cookie)
+                    .build();
+            Response response = client.newCall(request).execute();
+            String result = response.body().string();
+            result = result.substring(13, result.length() - 2);
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            return jsonObject.getJSONObject("yuyueInfo").getIntValue("countdown");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
      * 开线程获取进行单选
      */
     private Future syncSingleCheck(String cookie, Long id, Start start, String skuUuid){
@@ -249,7 +307,7 @@ public class DogDController {
                         + id +"\",\"num\":1,\"skuUuid\":\"" + skuUuid + "\",\"useUuid\":false}]}],\"serInfo\":{\"area\":\""
                         + start.getArea() + "\",\"user-key\":\"" + start.getUserKey() + "\"}}");
                 Request request = new Request.Builder()
-                        .url("https://api.m.jd.com/api")
+                        .url("http://api.m.jd.com/api")
                         .method("POST", body)
                         .addHeader("Cookie", cookie)
                         .addHeader("Host", "api.m.jd.com")
@@ -305,10 +363,11 @@ public class DogDController {
                 }
                 goodList.add(new Goods(id, yuyueTime, map1.get(id).getSkuUuid()));
             }
+            return goodList;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return goodList;
+        return null;
     }
 
     /**
@@ -322,6 +381,8 @@ public class DogDController {
                 JSONObject jsonObject = getMallCartList(cookie);
                 if(jsonObject == null){
                     return Collections.emptyMap();
+                }else if(jsonObject.isEmpty()){
+                    return null;
                 }
                 //处理商品列表
                 List<Goods> goods = processGoods(jsonObject.getJSONArray("vendors"), jsonObject.getIntValue("time"));
@@ -335,7 +396,7 @@ public class DogDController {
 
     private void threadSleep(long millis){
         try {
-            Thread.sleep(millis);
+//            Thread.sleep(millis);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -371,12 +432,12 @@ public class DogDController {
         int time;
         while(true){
             try{
-                threadSleep(10000);
+                threadSleep(300000);
                 OkHttpClient client = new OkHttpClient().newBuilder().build();
                 MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
                 RequestBody body = RequestBody.create(mediaType, "{}");
                 Request request = new Request.Builder()
-                        .url("https://api.m.jd.com/api?functionId=pcCart_jc_getCurrentCart&appid=JDC_mall_cart&loginType=3&body=%7B%22serInfo%22:%7B%22area%22:%2219_1607_3155_0%22,%22user-key%22:%220ecd9ce8-b490-4660-9ed1-74371bdd6026%22%7D,%22cartExt%22:%7B%22specialId%22:1%7D%7D")
+                        .url("http://api.m.jd.com/api?functionId=pcCart_jc_getCurrentCart&appid=JDC_mall_cart&loginType=3&body=%7B%22serInfo%22:%7B%22area%22:%2219_1607_3155_0%22,%22user-key%22:%220ecd9ce8-b490-4660-9ed1-74371bdd6026%22%7D,%22cartExt%22:%7B%22specialId%22:1%7D%7D")
                         .method("POST", body)
                         .addHeader("Referer", " https://cart.jd.com/")
                         .addHeader("Cookie", cookie)
@@ -388,10 +449,11 @@ public class DogDController {
                 String result = response.body().string();
                 JSONObject jsonObject = JSONObject.parseObject(result);
                 if(!jsonObject.isEmpty()){
-                    JSONObject cartJson = jsonObject.getJSONObject("resultData").getJSONObject("cartInfo");
-                    if(cartJson != null){
-                        cartJson.put("time", time);
+                    if(StringUtils.isNotEmpty(jsonObject.getString("message")) && Constants.PIN_IS_NULL.equals(jsonObject.getString("message"))){
+                        return new JSONObject();
                     }
+                    JSONObject cartJson = jsonObject.getJSONObject("resultData").getJSONObject("cartInfo");
+                    cartJson.put("time", time);
                     return cartJson;
                 }
             }catch (Exception e){
