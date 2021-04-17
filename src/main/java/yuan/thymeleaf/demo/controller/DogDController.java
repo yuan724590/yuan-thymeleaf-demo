@@ -161,7 +161,7 @@ public class DogDController {
 
     @PostMapping("/start1")
     public String start1(Model model, @ModelAttribute("compare") Start start){
-        start.setFp(StringUtils.isEmpty(start.getFp()) ? "4084a70f7affa8e9f0b4f13f88404fea" : start.getFp());
+        start.setFp(StringUtils.isEmpty(start.getFp()) ? "9270c326800e2472de10e6e9534226dd" : start.getFp());
         start.setEid(StringUtils.isEmpty(start.getEid())
                 ? "ARZW6MLEMMWNWAKN2NXCMHWSOQ6XSRVKBESH6ANAVDAH4FLWXJHXPNFO67CX7JPLRM7IW6WR6GBLKPH7JK525TLD4Y" : start.getEid());
         start.setArea(StringUtils.isEmpty(start.getArea()) ? "19_1607_3155_0" : start.getArea());
@@ -382,7 +382,7 @@ public class DogDController {
                 if(jsonObject == null){
                     return Collections.emptyMap();
                 }else if(jsonObject.isEmpty()){
-                    return null;
+                   return null;
                 }
                 //处理商品列表
                 List<Goods> goods = processGoods(jsonObject.getJSONArray("vendors"), jsonObject.getIntValue("time"));
