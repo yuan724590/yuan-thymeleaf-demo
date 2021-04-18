@@ -11,6 +11,7 @@ import yuan.thymeleaf.demo.entity.CompareJson;
 import yuan.thymeleaf.demo.entity.EntityToVo;
 import yuan.thymeleaf.demo.entity.Judgment;
 import yuan.thymeleaf.demo.entity.WordToConstant;
+import yuan.thymeleaf.demo.enums.EntityTypeEnum;
 import yuan.thymeleaf.demo.service.ToolsService;
 
 import java.util.ArrayList;
@@ -480,41 +481,76 @@ public class ToolsServiceImpl implements ToolsService {
         }
         String[] entityArray = entityToVo.getContent().split(Constants.LINE_FEED);
         String line;
-        String[] strArray;
-        StringBuilder stringBuilder = new StringBuilder();
+
+        entityToVo.setStringBuilder(new StringBuilder());
+        entityToVo.setEnums(EntityTypeEnum.DEFAULT_TYPE);
         for(String entity : entityArray){
             line = entity.replaceAll("\\s", "");
-            if(StringUtils.isEmpty(line) || line.startsWith(Constants.PRIVATE)){
-                //如果是空行 或者 是属性, 则跳过
-            }else if(line.startsWith(Constants.COLUMN_VALUE_ANNOTATION) || line.startsWith(Constants.SLASH_STAR_STAR)
-                    || line.startsWith(Constants.STAR_SLASH) || line.startsWith(Constants.DATA_ANNOTATION)
-                    || line.startsWith(Constants.TABLE_ANNOTATION) || line.startsWith(Constants.GENERATED_VALUE_ANNOTATION)){
-                //如果是 @Column || /** || */ || @Data || @Table || @GeneratedValue 就跳过
-                continue;
-            }else if(line.startsWith(Constants.STAR)){
-                //如果是注释行, 则将内容提取出来
-                strArray = entity.split(Constants.STAR_REGEX);
-                entity = strArray[0] + Constants.API_MODEL_PROPERTY_ANNOTATION + strArray[1].trim() + Constants.ANNOTATION_SUFFIX;
-            }else if(line.startsWith(Constants.IMPORT)){
-                if(line.contains(Constants.JAVAX_PERSISTENCE) || line.contains(Constants.LOMBOK_DATA)){
-                    //去掉@Data和@Table所import的包名
-                    continue;
-                }
-            }else if(entity.startsWith(Constants.PUBLIC_CLASS)){
-                //将文件名增加vo后缀
-                entity = entity.replace(Constants.SPACE_BRACKET, Constants.VO_SPACE_BRACKET);
-            }else if(line.startsWith(Constants.PACKAGE)){
-                if(entity.contains(Constants.ENTITY)){
-                    //将包地址移动至vo下
-                    strArray = entity.split(Constants.ENTITY);
-                    entity = strArray[0] + Constants.VO + strArray[1];
-                }
-            }else if(line.startsWith(Constants.ID_ANNOTATION)){
-                //如果是@Id 则换成空行
-                entity = "";
+            //解析entity的每一行
+            entity = analysisEntity(entityToVo, line, entity);
+            //处理vo的string
+            processVoString(entityToVo, entity);
+        }
+        model.addAttribute("voContent", entityToVo.getStringBuilder().toString());
+    }
+
+    /**
+     * 解析实体类的内容
+     */
+    private String analysisEntity(EntityToVo entityToVo, String line, String entity){
+        String[] strArray;
+        if(line.startsWith(Constants.COLUMN_VALUE_ANNOTATION)
+                || line.startsWith(Constants.SLASH_STAR_STAR) || line.startsWith(Constants.STAR_SLASH)
+                || line.startsWith(Constants.DATA_ANNOTATION) || line.startsWith(Constants.TABLE_ANNOTATION)
+                || line.startsWith(Constants.GENERATED_VALUE_ANNOTATION) || line.startsWith(Constants.ID_ANNOTATION)){
+            //如果是空行 || 属性 || @Column || /** || */ || @Data || @Table || @GeneratedValue || @Id就跳过
+            entityToVo.setEnums(EntityTypeEnum.SKIP_TYPE);
+        }else if(line.startsWith(Constants.STAR)){
+            //如果是注释行, 则将内容提取出来
+            strArray = entity.split(Constants.STAR_REGEX);
+            entity = strArray[0] + Constants.API_MODEL_PROPERTY_ANNOTATION + strArray[1].trim() + Constants.ANNOTATION_SUFFIX;
+        }else if(line.startsWith(Constants.IMPORT)){
+            if(line.contains(Constants.JAVAX_PERSISTENCE) || line.contains(Constants.LOMBOK_DATA)){
+                //去掉@Data和@Table所import的包名
+                entityToVo.setEnums(EntityTypeEnum.SKIP_TYPE);
             }
-            addClassLabel(stringBuilder, entity, false);
-            model.addAttribute("voContent", stringBuilder.toString());
+        }else if(entity.startsWith(Constants.PUBLIC_CLASS)){
+            //将文件名增加vo后缀
+            entity = entity.replace(Constants.SPACE_BRACKET, Constants.VO_SPACE_BRACKET);
+            entityToVo.setExtra("");
+            entityToVo.setEnums(EntityTypeEnum.AFTER_EXTRA_TYPE);
+        }else if(line.startsWith(Constants.PACKAGE)){
+            if(entity.contains(Constants.ENTITY)){
+                //将包地址移动至vo下
+                strArray = entity.split(Constants.ENTITY);
+                entity = strArray[0] + Constants.VO + strArray[1];
+            }
+            entityToVo.setExtra("import io.swagger.annotations.ApiModelProperty;");
+            entityToVo.setEnums(EntityTypeEnum.AFTER_EXTRA_TYPE);
+        }
+        return entity;
+    }
+
+    /**
+     * 处理vo的string
+     */
+    private void processVoString(EntityToVo entityToVo, String entity){
+        switch (entityToVo.getEnums()){
+            case DEFAULT_TYPE:
+                //如果是默认类型
+                addClassLabel(entityToVo.getStringBuilder(), entity, false);
+                break;
+            case SKIP_TYPE:
+                //如果是跳过类型, 就只重置
+                entityToVo.setEnums(EntityTypeEnum.DEFAULT_TYPE);
+                break;
+            case AFTER_EXTRA_TYPE:
+                //如果是之后拓展类型
+                addClassLabel(entityToVo.getStringBuilder(), entity, false);
+                addClassLabel(entityToVo.getStringBuilder(), entityToVo.getExtra(), false);
+                entityToVo.setEnums(EntityTypeEnum.DEFAULT_TYPE);
+            default:
+                break;
         }
     }
 
